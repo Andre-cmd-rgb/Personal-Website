@@ -5,6 +5,8 @@ import { marked } from 'marked';
 import { useRandomQuote } from '@/components/Quotes'; // Import our new custom hook from its new location
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from "@vercel/analytics/react";
 
 export default function HomePage() {
   const [aboutMeContent, setAboutMeContent] = useState('<p>Loading bio...</p>');
@@ -39,6 +41,7 @@ export default function HomePage() {
 
       <section className="section">
         <div dangerouslySetInnerHTML={{ __html: aboutMeContent }} />
+        <Analytics />
       </section>
 
       <section className="section">
@@ -47,8 +50,8 @@ export default function HomePage() {
             <p style={{fontStyle: 'italic', lineHeight: '1.6'}}>"{randomQuote.content}"</p>
             {randomQuote.author && (<p style={{textAlign: 'right', color: '#888888', marginTop: '1.5rem'}}>— {randomQuote.author}</p>)}
         </div>
+      <SpeedInsights />
       </section>
-      
       <Footer />
     </>
   );
