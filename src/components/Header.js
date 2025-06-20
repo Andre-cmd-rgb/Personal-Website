@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link'; // 1. Import the Link component from Next.js
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/react"
 
 const Header = () => {
   const title = "andre-cmd-rgb";
@@ -16,6 +17,7 @@ const Header = () => {
       This is my website 😅, don’t judge 🙈
       </p>
     <SpeedInsights />
+    <Analytics/>
     </header>
   );
 };
