@@ -1,62 +1,56 @@
-"use client";
-import React, { useState, useEffect } from 'react';
-import { marked } from 'marked';
+import fs from 'fs';
+import path from 'path';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-export default function NotesPage() {
-  const [posts, setPosts] = useState([]);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+// This function runs on the server when the page is built or requested.
+function getPosts() {
+  const postsDirectory = path.join(process.cwd(), 'public/posts');
+  const filenames = fs.readdirSync(postsDirectory);
 
-  useEffect(() => {
-    fetch('/posts/index.json')
-      .then(res => res.json())
-      .then(data => setPosts(data))
-      .catch(err => console.error("Failed to load posts list:", err));
-  }, []);
+  const posts = filenames
+    .filter(filename => filename.endsWith('.md')) // Ensure we only read markdown files
+    .map(filename => {
+      const filePath = path.join(postsDirectory, filename);
+      const fileContents = fs.readFileSync(filePath, 'utf8');
 
-  const loadPostContent = async (file) => {
-    setIsLoading(true);
-    setSelectedPost(null);
-    try {
-      const response = await fetch(`/posts/${file}`);
-      const markdown = await response.text();
-      const content = marked.parse(markdown);
-      setSelectedPost({ file, content });
-    } catch (error) {
-      console.error("Failed to load post content:", error);
-      setSelectedPost({ file, content: "<p>Error: Could not load this post.</p>" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      // A simple way to get the title is to look for the first H1 header in the markdown.
+      // Example: The line "# My Post Title" will be captured.
+      const titleMatch = fileContents.match(/^# (.*)/);
+      const title = titleMatch ? titleMatch[1] : 'Untitled Post';
 
-  const PostList = () => (
-    <section className="section">
-      <h2>📝 Blog</h2>
-      <ul>
-        {posts.map(post => (
-          <li key={post.file}>
-            <a href="#" onClick={(e) => { e.preventDefault(); loadPostContent(post.file); }}>{post.title}</a>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
+      // The slug is the filename without the .md extension.
+      const slug = filename.replace(/\.md$/, '');
 
-  const PostContent = () => (
-    <section className="section">
-      <button className="back-button" onClick={() => setSelectedPost(null)}>← Back to List</button>
-      <div style={{ marginTop: '1.5rem' }} dangerouslySetInnerHTML={{ __html: selectedPost.content }} />
-    </section>
-  );
+      return { slug, title };
+    });
+
+  return posts;
+}
+
+export default function BlogIndexPage() {
+  const posts = getPosts();
 
   return (
     <>
       <Header />
-      {isLoading && <p>Loading...</p>}
-      {!selectedPost ? <PostList /> : <PostContent />}
+      <section className="section">
+        <h2>✍️ Blog</h2>
+        {posts.length > 0 ? (
+          <ul>
+            {posts.map(post => (
+              <li key={post.slug}>
+                <Link href={`/blog/${post.slug}`}>
+                  {post.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No blog posts found.</p>
+        )}
+      </section>
       <Footer />
     </>
   );
